@@ -6,6 +6,10 @@
 #include <Adafruit_GC9A01A.h>
 #include <SPI.h>
 
+#define DISABLE_PLAYLISTS
+#define DISABLE_LIBRARY
+#define DISABLE_USER
+#define DISABLE_METADATA
 
 #include "myAccess.h" // Contains  ssid password and API id and tokens
 
@@ -23,6 +27,7 @@ Adafruit_GC9A01A tft = Adafruit_GC9A01A(CS_PIN, DC_PIN,RST_PIN);
 
 // Create an instance of the Spotify class (optional: specify retry count)
 Spotify sp(CLIENT_ID, CLIENT_SECRET,REFRESH_TOKEN);
+String last_play;
 
 void setup() {
  Serial.begin(115200);
@@ -49,16 +54,26 @@ void setup() {
 void loop() {
  // Your code here
  String current_play=sp.current_track_name();
- String artists= sp.current_artist_names();
- Serial.println(current_play);
- Serial.println(artists);
- tft.fillScreen(GC9A01A_BLUE);
-
- tft.setCursor(20,100);
- tft.print(current_play);
- tft.setCursor(20,150);
- tft.print(artists);
- delay(3000);
+ //Serial.println("Get name");
+ if (current_play!=last_play){
+    //Serial.println("New Track update data");
+    last_play=current_play;
+    String artists= sp.current_artist_names();
+    String url_image=sp.get_current_album_image_url(-1);
+    Serial.println(current_play);
+    Serial.println(artists);
+    tft.fillScreen(GC9A01A_BLUE);
+    tft.setCursor(20,100);
+    tft.print(current_play);
+    tft.setCursor(20,150);
+    tft.print(artists);
+ 
+ //TODO load image get_current_album_image_url(int image_size_idx);
+ //TODO if bouton skip_to_previous();
+ //TODO if bouton2 skip_to_next();
+ //TODO if bouton3 pause_playback();
+}
+delay(3000);
 }
 
 void connect_to_wifi() {
