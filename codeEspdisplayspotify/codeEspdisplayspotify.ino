@@ -2,13 +2,23 @@
 #include <WiFi.h>
 #include "SpotifyEsp32.h"
 
+#include <Adafruit_GFX.h>
+#include <Adafruit_GC9A01A.h>
+#include <SPI.h>
+
+
 #include "myAccess.h" // Contains  ssid password and API id and tokens
 
+#define RST_PIN 3
+#define CS_PIN 7
+#define DC_PIN 2
+#define SDA_PIN 6
+#define SCL_PIN 4
 
 //USB CDC on boot enabled
 //Flash mode DIO
 
-// Adafruit_GC9A01A tft = Adafruit_GC9A01A(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_GC9A01A tft = Adafruit_GC9A01A(CS_PIN, DC_PIN,RST_PIN);
 
 
 // Create an instance of the Spotify class (optional: specify retry count)
@@ -18,7 +28,9 @@ void setup() {
  Serial.begin(115200);
  pinMode(8, OUTPUT);
  digitalWrite(8, HIGH);
-
+ tft.begin();
+ tft.setRotation(0);
+ tft.fillScreen(GC9A01A_BLUE);
  connect_to_wifi();
 
  // Optionally set custom scopes the available scopes are listed below
@@ -40,6 +52,12 @@ void loop() {
  String artists= sp.current_artist_names();
  Serial.println(current_play);
  Serial.println(artists);
+ tft.fillScreen(GC9A01A_BLUE);
+
+ tft.setCursor(20,100);
+ tft.print(current_play);
+ tft.setCursor(20,150);
+ tft.print(artists);
  delay(3000);
 }
 
