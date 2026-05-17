@@ -13,7 +13,6 @@
 
 // Create an instance of the Spotify class (optional: specify retry count)
 Spotify sp(CLIENT_ID, CLIENT_SECRET,REFRESH_TOKEN);
-String current_play;
 
 void setup() {
  Serial.begin(115200);
@@ -26,20 +25,22 @@ void setup() {
  // sp.set_scopes("user-read-playback-state user-modify-playback-state");
 
  sp.begin();
- while (!sp.is_auth()) {
-     sp.handle_client(); // Required for receiving the authorization code
- }
+//  while (!sp.is_auth()) {
+//      sp.handle_client(); // Required for receiving the authorization code
+//  }
 
- Serial.printf("Authenticated! Refresh token: %s\n", sp.get_user_tokens().refresh_token);
+//  Serial.printf("Authenticated! Refresh token: %s\n", sp.get_user_tokens().refresh_token);
  digitalWrite(8, HIGH);
 
 }
 
 void loop() {
  // Your code here
- current_play=sp.current_track_name();
+ String current_play=sp.current_track_name();
+ String artists= sp.current_artist_names();
  Serial.println(current_play);
- delay(2000);
+ Serial.println(artists);
+ delay(3000);
 }
 
 void connect_to_wifi() {
