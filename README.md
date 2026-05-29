@@ -12,4 +12,7 @@ Linking an esp32 C3 super mini and a GC9A01 display to show your currently playi
 * SCL     →   GPIO 3
 * GND     →   GND
 * VCC     →   3.3V
+* SKIP    →   GPIO 13
+* PAUSE    →   GPIO 12
+* PREV   →   GPIO 11
 
