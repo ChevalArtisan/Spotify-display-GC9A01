@@ -5,11 +5,11 @@ Linking an esp32 C3 super mini and a GC9A01 display to show your currently playi
 # Wiring :
 
 
-* RST     →   GPIO 3 
-* CS      →   GPIO 7
-* DC      →   GPIO 2
-* SDA     →   GPIO 6
-* SCL     →   GPIO 4
+* RST     →   GPIO 4 
+* CS      →   GPIO 6
+* DC      →   GPIO 5
+* SDA     →   GPIO 7
+* SCL     →   GPIO 3
 * GND     →   GND
 * VCC     →   3.3V
 
