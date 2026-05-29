@@ -19,6 +19,10 @@
 #define SDA_PIN 7 
 #define SCL_PIN 3 
 
+#define SKIP_PIN 13
+#define PAUSE_PIN 12
+#define PREV_PIN 11
+
 
 //USB CDC on boot enabled
 
@@ -28,10 +32,26 @@ Adafruit_GC9A01A tft = Adafruit_GC9A01A(CS_PIN, DC_PIN,RST_PIN);
 // Create an instance of the Spotify class (optional: specify retry count)
 Spotify sp(CLIENT_ID, CLIENT_SECRET,REFRESH_TOKEN);
 String last_play;
+volatile bool skipRequested = false;
+volatile bool prevRequested = false;
+volatile bool pauseRequested = false;
+
+
+void IRAM_ATTR int_skip() { skipRequested = true; }
+void IRAM_ATTR int_prev() { prevRequested = true; }
+void IRAM_ATTR int_pause() { pauseRequested = true; }
 
 void setup() {
  Serial.begin(115200);
  Serial.println("Lancement");
+
+ pinMode(SKIP_PIN,INPUT_PULLUP);
+  pinMode(PREV_PIN,INPUT_PULLUP);
+ pinMode(PAUSE_PIN,INPUT_PULLUP);
+
+  attachInterrupt(SKIP_PIN, int_skip, FALLING);
+  attachInterrupt(PREV_PIN, int_prev, FALLING);
+  attachInterrupt(PAUSE_PIN, int_pause, FALLING);
 
 // On force l'initialisation du bus SPI avec tes broches spécifiques de l'S3
  SPI.begin(SCL_PIN, -1, SDA_PIN, CS_PIN); 
@@ -55,8 +75,24 @@ void setup() {
 
  void loop() {
 
-// Your code here
+if (skipRequested) {
+        Serial.println("Bouton SKIP pressé");
+        sp.skip_to_next();
+        skipRequested = false; // On baisse le drapeau
+        last_play = ""; // On force le rafraîchissement de l'écran au prochain tour
+    }
 
+    if (prevRequested) {
+        sp.skip_to_previous();
+        prevRequested = false;
+        last_play = "";
+    }
+
+    if (pauseRequested) {
+        // Optionnel : tu peux alterner entre pause et play ici
+        sp.pause_playback(); 
+        pauseRequested = false;
+    }
 String current_play=sp.current_track_name();
 Serial.println("Get name");
 
