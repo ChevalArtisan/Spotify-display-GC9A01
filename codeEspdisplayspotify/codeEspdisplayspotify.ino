@@ -89,8 +89,13 @@ if (skipRequested) {
     }
 
     if (pauseRequested) {
-        // Optionnel : tu peux alterner entre pause et play ici
-        sp.pause_playback(); 
+        if (sp.is_playing()){
+            Serial.println("Pause");
+            sp.pause_playback(); 
+        }else{
+            Serial.println("Play");
+            sp.start_a_users_playback();
+        }
         pauseRequested = false;
     }
 String current_play=sp.current_track_name();
