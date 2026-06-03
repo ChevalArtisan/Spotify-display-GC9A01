@@ -31,8 +31,7 @@
 Adafruit_GC9A01A tft = Adafruit_GC9A01A(CS_PIN, DC_PIN,RST_PIN);
 
 
-// Create an instance of the Spotify class (optional: specify retry count)
-Spotify sp(CLIENT_ID, CLIENT_SECRET,REFRESH_TOKEN);
+Spotify sp(CLIENT_ID, CLIENT_SECRET,REFRESH_TOKEN);//remove refresh token the first time
 String last_play;
 
 JPEGDEC jpeg;
@@ -47,7 +46,7 @@ void IRAM_ATTR int_pause() { pauseRequested = true; }
 
 void setup() {
  Serial.begin(115200);
- Serial.println("Lancement");
+ Serial.println("Start");
 
  pinMode(SKIP_PIN,INPUT_PULLUP);
   pinMode(PREV_PIN,INPUT_PULLUP);
@@ -57,19 +56,26 @@ void setup() {
   attachInterrupt(PREV_PIN, int_prev, FALLING);
   attachInterrupt(PAUSE_PIN, int_pause, FALLING);
 
-// On force l'initialisation du bus SPI avec tes broches spécifiques de l'S3
  SPI.begin(SCL_PIN, -1, SDA_PIN, CS_PIN); 
 
  tft.begin();
  tft.setRotation(0);
- tft.fillScreen(GC9A01A_BLUE);
- tft.setFont();
+ tft.fillScreen(GC9A01A_BLACK);
+ tft.setTextSize(1);
+ tft.setCursor(20,120);
+ tft.print("Start");
+ delay(2000);
+ tft.fillScreen(GC9A01A_BLACK);
+ tft.setCursor(20,120);
+ tft.print("Wifi connection");
  connect_to_wifi();
-
- // Optionally set custom scopes the available scopes are listed below
- // sp.set_scopes("user-read-playback-state user-modify-playback-state");
+ tft.fillScreen(GC9A01A_BLACK);
+ tft.setCursor(20,120);
+ tft.print("Connection successful");
+ delay(2000);
 
  sp.begin();
+//Uncomment the first time
 //  while (!sp.is_auth()) {
 //      sp.handle_client(); // Required for receiving the authorization code
 //  }
@@ -84,14 +90,17 @@ for (int i=0; i<=10; i++) {
 if (skipRequested) {
         Serial.println("Bouton SKIP pressé");
         sp.skip_to_next();
-        skipRequested = false; // On baisse le drapeau
-        last_play = ""; // On force le rafraîchissement de l'écran au prochain tour
+        skipRequested = false; 
+        last_play = ""; 
+        i=0;
     }
 
     if (prevRequested) {
         sp.skip_to_previous();
         prevRequested = false;
         last_play = "";
+        i=0;
+
     }
 
     if (pauseRequested) {
@@ -105,7 +114,8 @@ if (skipRequested) {
         pauseRequested = false;
     }
 delay(300);
- }
+}
+
 String current_play=sp.current_track_name();
 Serial.println("Get name");
 
@@ -124,29 +134,16 @@ Serial.println(url_image);
 
 tft.fillScreen(GC9A01A_BLACK);
 
-// 1. On dessine la pochette d'album en premier plan
-afficherImageDepuisURL(url_image);
+ShowIMG(url_image);
 
-// --- CONFIGURATION DU BANDEAU INFÉRIEUR ---
-int ecranTaille = 240;       // Le GC9A01 fait 240x240 pixels
-int hauteurBandeau = 55;     // Hauteur de la zone noire en bas
-int yBandeau = 120; // Position Y de départ (185)
+int yStrip = 160; 
 
-// 2. On dessine le bandeau noir opaque pour masquer le bas de l'image
-tft.fillRect(0, yBandeau, ecranTaille, hauteurBandeau, GC9A01A_BLACK);
-
-// 3. Configuration globale du texte (Blanc, Petite taille)
+tft.fillRect(0, yStrip, 240, 55, GC9A01A_BLACK);
 tft.setTextColor(GC9A01A_WHITE); 
-tft.setTextSize(1); // Taille 1 pour un rendu fin, propre et discret
-
-// --- AFFICHAGE DU TITRE ---
-// Sur un écran rond, plus on descend, plus l'écran se rétrécit. 
-// On commence donc un peu plus vers la droite (X=35) pour éviter que le texte soit coupé par le bord arrondi.
-tft.setCursor(35, yBandeau + 12); 
+tft.setTextSize(1);
+tft.setCursor(35, yStrip + 12); 
 tft.print(removeSpecial(current_play));
-
-// --- AFFICHAGE DE L'ARTISTE ---
-tft.setCursor(35, yBandeau + 32);
+tft.setCursor(35, yStrip + 32);
 tft.print(removeSpecial(artists));
 }
 
@@ -159,6 +156,7 @@ String removeSpecial(String str) {
   str.replace("è", "e");
   str.replace("ê", "e");
   str.replace("à", "a");
+  str.replace("ä", "a");
   str.replace("ç", "c");
   return str;
 }
@@ -174,14 +172,12 @@ void connect_to_wifi() {
 }
 
 
-// --- Fonction de rappel (Callback) pour l'affichage ---
-// Cette fonction est appelée automatiquement par JPEGDEC pour chaque bloc de l'image décodée.
+
 int JPEGDraw(JPEGDRAW *pDraw) {
-  // Envoi du bloc de pixels à la bibliothèque Adafruit_GFX
   tft.drawRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
-  return 1; // Retourne 1 pour indiquer au décodeur de continuer
+  return 1;
 }
-void afficherImageDepuisURL(String url) {
+void ShowIMG(String url) {
   HTTPClient http;
   
   Serial.println("\n[HTTP] Connexion au serveur...");
@@ -198,7 +194,6 @@ void afficherImageDepuisURL(String url) {
       return;
     }
 
-    // Allocation de la mémoire RAM
     uint8_t * imageBuffer = (uint8_t *) malloc(tailleFichier);
     if (!imageBuffer) {
       Serial.println("[Erreur] Pas assez de mémoire RAM pour stocker cette image.");
@@ -206,7 +201,6 @@ void afficherImageDepuisURL(String url) {
       return;
     }
 
-    // Lecture sécurisée du flux (évite les coupures prématurées)
     WiFiClient * stream = http.getStreamPtr();
     int totalRead = 0;
     unsigned long timeout = millis();
@@ -215,7 +209,7 @@ void afficherImageDepuisURL(String url) {
       if (stream->available()) {
         int read = stream->readBytes(&imageBuffer[totalRead], tailleFichier - totalRead);
         totalRead += read;
-        timeout = millis(); // Reset du timeout à chaque bloc reçu
+        timeout = millis(); 
       }
       delay(10);
     }
@@ -223,7 +217,6 @@ void afficherImageDepuisURL(String url) {
     Serial.printf("[HTTP] Octets réellement téléchargés : %d / %d\n", totalRead, tailleFichier);
 
     if (totalRead == tailleFichier) {
-      // Tentative d'ouverture de l'image
       if (jpeg.openRAM(imageBuffer, tailleFichier, JPEGDraw)) {
         jpeg.setPixelType(RGB565_LITTLE_ENDIAN); 
         
@@ -232,8 +225,6 @@ void afficherImageDepuisURL(String url) {
         
         Serial.printf("[JPEG] Image valide trouvée ! Résolution : %dx%d\n", jpeg.getWidth(), jpeg.getHeight());
         Serial.println("[JPEG] Début du décodage...");
-        
-        // Execution et VERIFICATION du décodage
         int resultat = jpeg.decode(xOffset, yOffset, 0); 
         
         if (resultat == 1) {
