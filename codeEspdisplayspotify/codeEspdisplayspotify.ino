@@ -93,6 +93,9 @@ if (skipRequested) {
         skipRequested = false; 
         last_play = ""; 
         i=0;
+        tft.fillScreen(GC9A01A_BLACK);
+        tft.setCursor(20,120);
+        tft.print("Loading");
     }
 
     if (prevRequested) {
@@ -100,6 +103,9 @@ if (skipRequested) {
         prevRequested = false;
         last_play = "";
         i=0;
+        tft.fillScreen(GC9A01A_BLACK);
+        tft.setCursor(20,120);
+        tft.print("Loading");
 
     }
 
@@ -158,6 +164,7 @@ String removeSpecial(String str) {
   str.replace("à", "a");
   str.replace("ä", "a");
   str.replace("ç", "c");
+  str.replace("ô", "o");
   return str;
 }
 
