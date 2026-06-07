@@ -165,6 +165,11 @@ String removeSpecial(String str) {
   str.replace("ä", "a");
   str.replace("ç", "c");
   str.replace("ô", "o");
+
+  int par = str.indexOf('(');
+  str.remove(par,256);
+  int hyphen = str.indexOf('-');
+  str.remove(hyphen,256);
   return str;
 }
 
