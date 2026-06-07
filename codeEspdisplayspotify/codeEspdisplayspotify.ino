@@ -92,7 +92,7 @@ if (skipRequested) {
         sp.skip_to_next();
         skipRequested = false; 
         last_play = ""; 
-        i=0;
+        i=5;
         tft.fillScreen(GC9A01A_BLACK);
         tft.setCursor(20,120);
         tft.print("Loading");
@@ -102,7 +102,7 @@ if (skipRequested) {
         sp.skip_to_previous();
         prevRequested = false;
         last_play = "";
-        i=0;
+        i=5;
         tft.fillScreen(GC9A01A_BLACK);
         tft.setCursor(20,120);
         tft.print("Loading");
@@ -125,7 +125,7 @@ delay(300);
 String current_play=sp.current_track_name();
 Serial.println("Get name");
 
-if (current_play!=last_play){
+if (current_play!=last_play and current_play!="Something went wrong"){
 
 Serial.println("New Track:update data");
 
@@ -142,14 +142,14 @@ tft.fillScreen(GC9A01A_BLACK);
 
 ShowIMG(url_image);
 
-int yStrip = 160; 
+int yStrip = 180; 
 
-tft.fillRect(0, yStrip, 240, 55, GC9A01A_BLACK);
+tft.fillRect(0, yStrip, 240, 5, GC9A01A_WHITE);
 tft.setTextColor(GC9A01A_WHITE); 
 tft.setTextSize(1);
-tft.setCursor(35, yStrip + 12); 
+tft.setCursor(60, yStrip + 12); 
 tft.print(removeSpecial(current_play));
-tft.setCursor(35, yStrip + 32);
+tft.setCursor(60, yStrip + 32);
 tft.print(removeSpecial(artists));
 }
 
@@ -165,6 +165,7 @@ String removeSpecial(String str) {
   str.replace("ä", "a");
   str.replace("ç", "c");
   str.replace("ô", "o");
+  str.replace("î", "i");
 
   int par = str.indexOf('(');
   str.remove(par,256);
@@ -186,7 +187,8 @@ void connect_to_wifi() {
 
 
 int JPEGDraw(JPEGDRAW *pDraw) {
-  tft.drawRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+    tft.drawRGBBitmap(pDraw->x, pDraw->y, pDraw->pPixels, pDraw->iWidth, pDraw->iHeight);
+  
   return 1;
 }
 void ShowIMG(String url) {
@@ -207,11 +209,6 @@ void ShowIMG(String url) {
     }
 
     uint8_t * imageBuffer = (uint8_t *) malloc(tailleFichier);
-    if (!imageBuffer) {
-      Serial.println("[Erreur] Pas assez de mémoire RAM pour stocker cette image.");
-      http.end();
-      return;
-    }
 
     WiFiClient * stream = http.getStreamPtr();
     int totalRead = 0;
@@ -226,36 +223,20 @@ void ShowIMG(String url) {
       delay(10);
     }
 
-    Serial.printf("[HTTP] Octets réellement téléchargés : %d / %d\n", totalRead, tailleFichier);
-
     if (totalRead == tailleFichier) {
       if (jpeg.openRAM(imageBuffer, tailleFichier, JPEGDraw)) {
         jpeg.setPixelType(RGB565_LITTLE_ENDIAN); 
         
         int xOffset = (240 - jpeg.getWidth()) / 2;
         int yOffset = (240 - jpeg.getHeight()) / 2;
-        
         Serial.printf("[JPEG] Image valide trouvée ! Résolution : %dx%d\n", jpeg.getWidth(), jpeg.getHeight());
         Serial.println("[JPEG] Début du décodage...");
-        int resultat = jpeg.decode(xOffset, yOffset, 0); 
-        
-        if (resultat == 1) {
-          Serial.println("[Succès] L'image a été entièrement décodée et envoyée à l'écran !");
-        } else {
-          Serial.printf("[Erreur] Le décodage a échoué. Code erreur JPEGDEC : %d\n", jpeg.getLastError());
-          Serial.println("-> Note : Si l'erreur est 3 ou 4, votre image est un JPEG 'Progressif'. Il faut un JPEG 'Standard/Baseline'.");
-        }
+        int resultat = jpeg.decode(45, 30, JPEG_SCALE_HALF); 
         jpeg.close();
-      } else {
-        Serial.printf("[Erreur] openRAM a échoué. Le fichier n'est pas un JPEG valide. Code : %d\n", jpeg.getLastError());
-      }
-    } else {
-      Serial.println("[Erreur] Téléchargement incomplet (Time out de la connexion).");
+      } 
     }
     
     free(imageBuffer); // Libération de la mémoire
-  } else {
-    Serial.printf("[Erreur HTTP] Code de réponse du serveur : %d\n", httpCode);
   }
   http.end();
 }
